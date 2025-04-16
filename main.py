@@ -20,11 +20,11 @@ def save_data_to_gs(user_name, user_answers, score):
     for ans in user_answers:
         row = [
             user_name,
-            datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            datetime.now().strftime("%Y-%m-%d - %H:%M:%S"),
             ans["question"],
             ans["user_answer"],
             ans["correct_answer"],
-            "✅" if ans["is_correct"] else "❌",
+            "true" if ans["is_correct"] else "false",
             score,
         ]
         sheet.append_row(row)
