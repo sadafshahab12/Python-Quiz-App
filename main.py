@@ -4,6 +4,34 @@ from datetime import datetime
 from quiz import quiz_data
 import json
 import os
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
+
+# Load credentials from Streamlit secrets
+creds = st.secrets["google_service_account"]
+# Google Sheets setup
+scope = [
+    "https://spreadsheets.google.com/feeds",
+    "https://www.googleapis.com/auth/drive",
+]
+creds = ServiceAccountCredentials.from_json_keyfile_dict(creds, scope)
+client = gspread.authorize(creds)
+sheet = client.open("python_quiz_data").worksheet("responses")
+
+
+def save_data_to_gs(user_name, user_answers, score):
+    for ans in user_answers:
+        row = [
+            user_name,
+            datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            ans["question"],
+            ans["selected"],
+            ans["correct"],
+            "✅" if ans["is_correct"] else "❌",
+            score,
+        ]
+        sheet.append_row(row)
+
 
 st.title("Python Quiz")
 
@@ -29,33 +57,40 @@ if user_name:
         score = sum([1 for ans in user_answers if ans["is_correct"]])
         st.success(f"Your score is {score} out of {len(quiz_data)}")
 
-        user_data = {
-            "user": user_name,
-            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "score": score,
-            "total_question": len(quiz_data),
-            "answers": user_answers,
-        }
+        save_data_to_gs(user_name, user_answers, score)
+        st.info("Your responses have been saved to Google Sheets")
 
-        if os.path.exists("user_data.json"):
-            with open("user_data.json", "r") as file:
-                data = json.load(file)
-        else:
-            data = []
+# -------------------------------------------------------------------------
+# json method
+# -------------------------------------------------------------------------
+# user_data = {
+#     "user": user_name,
+#     "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+#     "score": score,
+#     "total_question": len(quiz_data),
+#     "answers": user_answers,
+# }
 
-        data.append(user_data)
+# if os.path.exists("user_data.json"):
+#     with open("user_data.json", "r") as file:
+#         data = json.load(file)
+# else:
+#     data = []
 
-        # saved updated user data
-        with open("user_data.json", "w") as file:
-            json.dump(data, file, indent=4)
+# data.append(user_data)
 
-        st.success("📝 Your answers have been saved.")
+# # saved updated user data
+# with open("user_data.json", "w") as file:
+#     json.dump(data, file, indent=4)
 
-        # csv method
-        # df = pd.DataFrame(user_answers)
-        # df["user"] = user_name
-        # df["timestamp"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        # df.to_csv("user_anmswer.csv", mode="a", index=False, header=False)
+# st.success("📝 Your answers have been saved.")
+# -------------------------------------------------------------------------
+# csv method
+# -------------------------------------------------------------------------
+# df = pd.DataFrame(user_answers)
+# df["user"] = user_name
+# df["timestamp"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+# df.to_csv("user_anmswer.csv", mode="a", index=False, header=False)
 
-        # st.write("your Answer:")
-        # st.dataframe(df)
+# st.write("your Answer:")
+# st.dataframe(df)
