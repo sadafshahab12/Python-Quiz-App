@@ -1,9 +1,6 @@
 import streamlit as st
-import pandas as pd
 from datetime import datetime
 from quiz import quiz_data
-import json
-import os
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
@@ -25,8 +22,8 @@ def save_data_to_gs(user_name, user_answers, score):
             user_name,
             datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             ans["question"],
-            ans["selected"],
-            ans["correct"],
+            ans["user_answer"],
+            ans["correct_answer"],
             "✅" if ans["is_correct"] else "❌",
             score,
         ]
